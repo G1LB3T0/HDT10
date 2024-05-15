@@ -53,19 +53,26 @@ class GrafoLogistica:
 
         return ruta
 
-def menu():
-    print("Opciones:")
-    print("1. Calcular ruta más corta entre dos ciudades.")
-    print("2. Mostrar ciudad en el centro del grafo.")
-    print("3. Modificar el grafo.")
-    print("4. Salir")
+    def centro_del_grafo(self):
+        n = len(self.grafo)
+        distancias = [[float('inf')] * n for _ in range(n)]
 
-    while True:
-        opcion = input("Seleccione una opción (1-4): ")
-        if opcion in ["1", "2", "3", "4"]:
-            return int(opcion)
-        else:
-            print("Opción inválida. Por favor, seleccione una opción válida.")
+        for i in range(n):
+            for j in range(n):
+                if i == j:
+                    distancias[i][j] = 0
+                elif self.grafo.get(list(self.grafo.keys())[i], {}).get(list(self.grafo.keys())[j]):
+                    distancias[i][j] = self.grafo[list(self.grafo.keys())[i]][list(self.grafo.keys())[j]]['normal']
+
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    if distancias[i][j] > distancias[i][k] + distancias[k][j]:
+                        distancias[i][j] = distancias[i][k] + distancias[k][j]
+
+        sumas_distancias = [sum(distancias[i]) for i in range(n)]
+        indice_centro = sumas_distancias.index(min(sumas_distancias))
+        return list(self.grafo.keys())[indice_centro]
 
 def menu():
     print("Opciones:")
@@ -110,8 +117,12 @@ def main():
             ciudad_destino = seleccionar_ciudad(ciudades)
             ruta = grafo_logistica.ruta_mas_corta(ciudad_origen, ciudad_destino)
             print(f"La ruta más corta entre {ciudad_origen} y {ciudad_destino} es:")
-            for ciudad in ruta:
-                print(ciudad)
+            for idx, ciudad in enumerate(ruta):
+                if idx != 0 and idx != len(ruta) - 1:
+                    print(f"{ciudad} (ciudad intermedia)")
+                else:
+                    print(ciudad)
+            print(f"La duración total del viaje es: {sum(grafo_logistica.grafo[ruta[i]][ruta[i + 1]]['normal'] for i in range(len(ruta) - 1))} horas\n")
 
         elif opcion == 2:
             centro = grafo_logistica.centro_del_grafo()
@@ -125,14 +136,31 @@ def main():
 
             modificacion = input("Seleccione la opción de modificación (a, b, c): ")
             if modificacion == "a":
-                # Implementar la interrupción de tráfico
-                pass
+                ciudad1 = input("Ingrese el nombre de la primera ciudad: ")
+                ciudad2 = input("Ingrese el nombre de la segunda ciudad: ")
+                if ciudad1 in grafo_logistica.grafo and ciudad2 in grafo_logistica.grafo[ciudad1]:
+                    del grafo_logistica.grafo[ciudad1][ciudad2]
+                    print(f"Se ha interrumpido el tráfico entre {ciudad1} y {ciudad2}.")
+                else:
+                    print("No existe una conexión entre esas ciudades.")
             elif modificacion == "b":
-                # Implementar la conexión entre ciudades
-                pass
+                ciudad1 = input("Ingrese el nombre de la primera ciudad: ")
+                ciudad2 = input("Ingrese el nombre de la segunda ciudad: ")
+                tiempo_normal = int(input("Ingrese el tiempo normal entre las ciudades en horas: "))
+                tiempo_lluvia = int(input("Ingrese el tiempo en caso de lluvia en horas: "))
+                tiempo_nieve = int(input("Ingrese el tiempo en caso de nieve en horas: "))
+                tiempo_tormenta = int(input("Ingrese el tiempo en caso de tormenta en horas: "))
+                grafo_logistica.agregar_conexion(ciudad1, ciudad2, tiempo_normal, tiempo_lluvia, tiempo_nieve, tiempo_tormenta)
+                print(f"Se ha establecido una nueva conexión entre {ciudad1} y {ciudad2}.")
             elif modificacion == "c":
-                # Implementar la indicación de clima entre ciudades
-                pass
+                ciudad1 = input("Ingrese el nombre de la primera ciudad: ")
+                ciudad2 = input("Ingrese el nombre de la segunda ciudad: ")
+                clima = input("Ingrese el clima entre las ciudades (normal, lluvia, nieve, tormenta): ")
+                if ciudad1 in grafo_logistica.grafo and ciudad2 in grafo_logistica.grafo[ciudad1]:
+                    grafo_logistica.grafo[ciudad1][ciudad2][clima] = int(input(f"Ingrese el tiempo en caso de {clima} en horas: "))
+                    print(f"Se ha actualizado el tiempo en caso de {clima} entre {ciudad1} y {ciudad2}.")
+                else:
+                    print("No existe una conexión entre esas ciudades.")
             else:
                 print("Opción de modificación inválida.")
 
